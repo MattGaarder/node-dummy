@@ -1,36 +1,37 @@
-// SETUP NAVBAR APP WITH EXPRESS
-
 const express = require('express');
-const path = require('path');
+const app = express();
+const { products } = require('./data.js')
 
-const app = express(); // just go ahead and invoke express immediately 
-
-// note that using public is convention but not strictly necessary
-// I have copied the css etc files over (just to not break the other apps, but they don't need to be there anymore)
-// and this is literally it. Pretty cool eh!
-
-app.use(express.static('./public'))
-
-
-// to send the html etc. we need to provide the absolute path (path module above)
-// if you need a refresh on this check out lesson 9 in node-tutorial
-
-app.get('/', (req,res) => {
-    res.sendFile(path.resolve(__dirname, './navbar-app/index.html'));
+app.get('/', (req, res) => {
+    res.send('<h1>Home Page</h1><a href="/api/products">products</a>');
 });
 
-// __dirname (the directory where the currently executing script resides).
-
-// still is not connected to other external sources like style.css and svg logo etc. BUT with express
-// ABOVE app.get we need app.use 
-
-
-
-app.all('*', (req,res) => {
-    res.status(400).send('resource not found');
+app.get('/api/products', (req, res) => {
+    const newProducts = products.map((product) => {
+        const { id, name, image } = product; // destructuring properties from products
+        return { id, name, image }
+    })
+    res.json(newProducts);
 });
 
+
+// For individual products we could hardcode each route like below - alternatively: 
+// In express we have something called route parameters - which is a better solution (below)
+
+// app.get('/api/products/1', (req, res) => {
+//     const singleProduct = products.find((product) => product.id === 1);
+//     res.json(singleProduct);
+// });
+
+app.get('/api/products/:productID', (req, res) => {
+    console.log(req)
+    console.log(req.params); // logs { productID: '1' } this is after refreshing on the url http://localhost:5000/api/products/1
+    const singleProduct = products.find((product) => product.id === 1);
+    res.json(singleProduct);
+});
+
+// In this situation productID is just a placeholder 
 
 app.listen(5000, () => {
-    console.log(`server is listening on port 5000`);
+    console.log('server is listening on port 5000');
 });
