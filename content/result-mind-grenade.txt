@@ -1,0 +1,1 @@
+this is result of util.promisify with writeFilePromise: Hello this is the first text file, Hello this is the second text filethis is result of util.promisify with writeFilePromise: Hello this is the first text file, Hello this is the second text file
