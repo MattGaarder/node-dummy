@@ -1,4 +1,5 @@
-
+// the put method is for updates
+// PUT -- www.store.com/api/orders/:id -- update specific order (params + send data)
 
 const express = require('express');
 const app = express();
@@ -10,9 +11,8 @@ app.use(express.static('./methods-public'));
 
 
 app.use(express.urlencoded({extended: false})); 
-// even though we're handling the form submission, we are not handling json data 
-// so we need to use another middleware 
-// parse json
+
+
 app.use(express.json())
 
 app.get('/api/people', (req, res) => {
@@ -20,28 +20,20 @@ app.get('/api/people', (req, res) => {
 });
 
 app.post('/api/people', (req, res) => {
-    const {name} = req.body; // express.json() now makes this possible
+    const {name} = req.body; 
     if(!name){
         return res.status(400).json({success:false, msg: 'please provide name value'})
     }
     res.status(201).json({success: true, person: name})
 })
 
-
-// in our javascript.html we are perform this same request, but in the front-end (these urls need to match)
-// const { data } = await axios.get('/api/people')
-
-
-// note the difference between the html version - <form action="/login" method="POST"> AND <input type="text" name="name" id="name" autocomplete="false" />
-// vs
-/* <label for="name"> enter name </label>
-<input
-  type="text"
-  name="name"
-  id="name"
-  class="form-input"
-  autocomplete="false"
-/> */
+app.post('/api/postman/people', (req, res) => {
+    const { name } = req.body;
+    if(!name){
+        return res.status(400).json({success:false, msg: 'please provide name value'})
+    }
+    res.status(201).json({success: true, data: [...people, name]})
+})
 
 app.post('/login', (req, res) => {
     const { name } = req.body;
@@ -50,6 +42,30 @@ app.post('/login', (req, res) => {
     }
     res.status(401).send('Please provide credentials');
 });
+
+app.put('/api/people/:id', (req, res) => { // :id is route params
+    // two things we are looking for here - the value in the params (which we access using req.params) (to look for a specific item)
+    // the second thing, when it comes to the put request, is what is being sent in the body (which will update the value for that item)
+    // so let's access the first things first:
+    const {id} = req.params;
+    // and the second
+    const {name} = req.body;
+    // console.log(id, name); // localhost:5000/api/people/5 // logs 5 petreput // {"name": "petreput"}
+    // res.send('hello world') // now lets set up some logic for how to actually update our values on our data properly 
+    const person = people.find((person) => person.id === Number(id));
+    if(!person){
+        return res.status(404).json({success:false, msg: `no person with id ${id}`})
+    } // if the person DOES exist we need to iterate over the array, for the person with the id that matches the param
+    const newPeople = people.map((person) => {
+        if(person.id === Number(id)){
+            person.name = name; // we are of course getting this name from the body
+        }
+        return person
+    })
+    res.status(200).json({success: true, data: newPeople});
+});
+
+// 
 
 app.listen(5000, () => {
     console.log('server is listening on port 5000');
