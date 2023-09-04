@@ -1,95 +1,62 @@
+// using logger.js function in any route 
+// how to apply this then?
+// use app.use()! (nice)
+
 const express = require('express');
 const app = express();
-const { products } = require('./data.js')
+const logger = require('./logger');
 
-// Home route to display Home Page
-app.get('/', (req, res) => {
-    res.send('<h1>Home Page</h1><a href="/api/products">products</a>');
-});
+const authorise = require('./authorise')
+const morgan = require('morgan');
 
-// Route to display all products with reduced information
-app.get('/api/products', (req, res) => {
-    const newProducts = products.map((product) => {
-        const { id, name, image } = product; // Destructuring properties from each product object
-        return { id, name, image }
-    })
-    res.json(newProducts);
-});
+// the way we can execture multiple middleware functions is by placing them in an array
+// if you want to add multiple middle ware to a single path, add them as the second argument of .get as an array like so:
 
-
-// For individual products we could hardcode each route like below - alternatively: 
-// In express we have something called route parameters - which is a better solution (below)
-
-// app.get('/api/products/1', (req, res) => {
-//     const singleProduct = products.find((product) => product.id === 1);
-//     res.json(singleProduct);
+// app.get('/', [logger, authorise], (req, res) => {
+//     res.send('Home');
 // });
 
-// Route to get a single product by ID
-// Utilizing route parameters for dynamic URLs
-app.get('/api/products/:productID', (req, res) => {
-    // console.log(req)
-    // console.log(req.params); // logs { productID: '1' } this is after refreshing on the url http://localhost:5000/api/products/1
-    // destructure productID from the param
-    const { productID } = req.params; // please note that this is a string - so below we need to change this to a number
-    const singleProduct = products.find((product) => product.id === Number(productID));
-    if (!singleProduct) { // this will be true if singleProduct is undefined so we can return a 404 code
-        return res.status(404).send('Product does not exist')
-    }
-    return res.json(singleProduct); // MAKE SURE TO RETURN .send() BECAUSE YOU CANNOT SEND TWO RESPONSES IN ONE REQUEST!! 
+// Options for Middleware: 
+// 1. Our own (see logger and authorise)
+
+// 2. express middleware 
+// .USE() EXPECTS MIDDLEWARE AS AN ARGUMENT
+// IN EXPRESS - WE HAVE A BUILT-IN MIDDLEWARE METHOD CALLED STATIC
+
+// app.use(express.static('./public'));
+
+// 3. third party
+// MORGAN NPM is a popular choice 
+
+app.use(morgan('tiny'));
+// logs GET /api/items?user=john 304 - - 8.188 ms (i.e. it shows how long it took for the server to respond)
+app.use([logger, authorise]); // They will be executed in order
+
+// app.use invokes logger for ANY route
+// ORDER MATTERS - if this was below app.get('/') - it would not be invoked in the homepage 
+// Note that we CAN set up a path by passing it in as the first argument in use
+
+// app.use('/api', logger);
+
+// this will apply to ANY path after api/ in the url
+
+app.get('/', (req, res) => {
+    res.send('Home');
 });
 
-// when thinking of route parameters think of them as placeholders where the user provides the data 
-// using request and params we can access that data and setup logic
-// In this situation productID is just a placeholder 
-// take the following code as an example:
-
-// Route to demonstrate multiple route parameters
-app.get('/api/products/:productID/reviews/:reviewID', (req, res) => {
-    console.log(req.params); // for the following url http://localhost:5000/api/products/4/reviews/3
-    res.send('hello world'); // this is logged to the console { productID: '4', reviewID: '3' }
+app.get('/about', (req, res) => {
+    res.send('About'); 
 });
-// this :placeholder in the url is important for how we are getting information from the url with req.params
-// review is NOT a relative parameter so it needs to be an exact match
+
+app.get('/api/products', (req, res) => {
+    res.send('Products'); 
+});
+
+app.get('/api/items', (req, res) => {
+    console.log(req.user); // when navigating to http://localhost:5000/api/items?user=john now
+    res.send('Items');  // this is logged to the console { name: 'john', id: 4 } (we can access the user from the authorise middleware)
+});
 
 app.listen(5000, () => {
     console.log('server is listening on port 5000');
 });
-
-// Route to demonstrate query parameters
-app.get('/api/v1/query', (req, res) => {
-    console.log(req.query); // the below URL logs the following { name: 'john', id: '4' } (string) // so basically we can access the parameters and do something with them
-    const { search, limit } = req.query; // Destructuring search and limit from query parameters // http://localhost:5000/api/v1/query?name=john&id=4
-    // If the user doesn't provide them, no problem - we can send back all the products
-    // In the below logic if(search) - so if search isn't there, we skip this logic 
-    let sortedProducts = [...products]; // copying the products in a shallow copy array so that we can make changes to it
-
-    // Filter products based on the search query parameter
-    if (search) {
-        sortedProducts = sortedProducts.filter((product) => {
-            return product.name.startsWith(search);
-        })
-    }
-    // Limit the number of products based on the limit query parameter
-    if (limit) {
-        sortedProducts = sortedProducts.slice(0, Number(limit));
-    }
-    if(sortedProducts.length < 1){
-        // res.status(200).send('no products match your search'); // note that even though this returns an empty array, it is not because the resource doesn't exist but because this didn't yield any results
-        return res.status(200).json({success: true, data: []});
-    }
-    res.status(200).json(sortedProducts);
-}) 
-
-// One thing to note is that you have both res.status(200).json(sortedProducts); and res.send('hello world'); in your code. This will result in an error because you can only send one response back to the client. 
-
-// for example http://localhost:5000/api/v1/query?name=john&id=4
-
-// http://localhost:5000/api/v1/query?name=john&id=4
-
-// query strings in url 
-// hn.alogolia.com/api/v1/search?query=foo&tags=story 
-// anything after the ? is not actually part of the url, it is just data that is being queried to the server
-// if the setup is supported by the server we can setup key value pairs
-// query : value of the query
-// we are now in charge of the server so we can make query be anything
