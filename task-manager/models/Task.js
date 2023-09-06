@@ -14,8 +14,28 @@ const mongoose = require('mongoose');
 // key value pairs = set equal to an object
 // whats the key? Name, completed 
 
+// WE ARE CONNECTED TO THE DATABASE WOO
+// only the properties that are described in our schema will be sent to the database 
+// everything else will be ignored 
+
+// currently we have no validation for our values 
+// what we can do is set up our properties as objects - and then set up built-in validators
+
+// const TaskSchema = new mongoose.Schema({     // without validation
+//     name: String, completed: Boolean
+// });
+
 const TaskSchema = new mongoose.Schema({
-    name: String, completed:Boolean
+    name: {
+        type: String,
+        required: [true, 'must provide name'],
+        trim: true,
+        maxlength: [20, 'name can not be more than 20 characters']
+    }, 
+    completed: {
+        type: Boolean,
+        default: false
+    }
 });
 
 
@@ -29,3 +49,7 @@ const TaskSchema = new mongoose.Schema({
 module.exports = mongoose.model('Task', TaskSchema); // model looks for two arguments, the name, and the schema
 
 // now we just go to the controllers and start using our model
+
+
+
+
