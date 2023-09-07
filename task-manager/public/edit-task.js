@@ -14,6 +14,8 @@ const showTask = async () => {
       data: { task },
     } = await axios.get(`/api/v1/tasks/${id}`)
     const { _id: taskID, completed, name } = task
+    console.log('Client-side ID:', id);
+    console.log('Client-side Task:', task)
 
     taskIDDOM.textContent = taskID
     taskNameDOM.value = name

@@ -1,4 +1,4 @@
-const Task = require('../models/Task.js');
+const Task = require('../models/task.js'); // Changed to lower case
 
 
 const getAllTasks = async (req, res) => {
@@ -74,7 +74,9 @@ const createNewTask = async (req, res) => {
 
 const getSingleTask = async (req, res) => {
     try {
-        const {id: taskID} = req.params
+        const {id: taskID} = req.params;
+        console.log(taskID)
+        console.log(req.params)
         const task = await Task.findOne({_id: taskID})
         if(!task){
             return res.status(404).json({msg: `No task with id: ${taskID}`})
@@ -110,8 +112,8 @@ const updateTask = async (req, res) => {
         if(!task){                                                            // basically because whilst this does update the task, it doesn't change the value in the get all request
             return res.status(404).json({msg: `No task with id: ${taskID}`});
         }
-        res.status(200).json({});
-
+        console.log("Server-side task:", task);
+        res.status(200).json({ task });
     } catch (error) {
         res.status(500).json({ msg: error}); 
     }
