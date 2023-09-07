@@ -5,6 +5,8 @@ const express = require('express');
 const app = express(); // initialise and invoke 
 const tasks = require('./routes/tasks');
 const connectDB = require('./db/connect');
+const notFound = require('./middleware/not-found');
+const errorHandlerMiddlerware = require('./middleware/error-handler')
 require('dotenv').config()
 
 const port = 3000;
@@ -13,18 +15,17 @@ app.use(express.json()); // if we don't do this we won't have the data in req.bo
 
 app.use(express.static('./public'));
 
-app.use(express.urlencoded({extended: false})); 
+// app.use(express.urlencoded({extended: false})); 
 
 // The express.urlencoded middleware is used to parse incoming request bodies with URL-encoded payloads.
 // This is commonly used for parsing data coming from HTML forms. When a form is submitted, the form data is sent as a URL-encoded string.
 // The express.urlencoded middleware parses this data and makes it available under the req.body property.
 // In this case my API is solely consumed by client-side JavaScript or other servers that send JSON payloads, then express.json() is sufficient.
 
-app.get('/', (req, res) => {
-    res.send(`<h1>Homepage</h1>`)
-});
 
-app.use('/api/v1/tasks', tasks)
+app.use('/api/v1/tasks', tasks);
+app.use(notFound);
+app.use(errorHandlerMiddlerware);
 
 // Eventually what we are going to want for the structure of the project/API is:
 
